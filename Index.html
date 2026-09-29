@@ -1,0 +1,434 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Let me see</title><style>
+*{box-sizing:border-box}body{margin:0;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif}main{min-height:100svh}button{font:14px Arial;border:0;border-radius:0;cursor:pointer}button:focus-visible{outline:2px solid #245d1d;outline-offset:6px}#upload{padding:17px 30px;background:#85db68;color:#10220b;min-width:175px}#upload:hover{background:#75cd58}.actions{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%)}#caption{display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(100% - 16px);max-width:none;margin:0;text-align:center;font-weight:400;font-size:clamp(28px,2.7vw,36px);line-height:1.2;letter-spacing:-.02em;overflow-wrap:break-word}body.has-image #caption{display:block}body.has-image .actions{display:none}body.finished .actions{display:block;top:auto;bottom:12%;transform:translateX(-50%)}body.finished #upload{min-width:0;padding:10px 16px;color:#626262;background:transparent;font-size:13px}body.finished #upload:hover{color:#111;text-decoration:underline}#picture,#read,#stop,#notice,details{display:none!important}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.change{animation:appear .18s ease-out}@keyframes appear{from{opacity:0}to{opacity:1}}body.drag{outline:2px solid #85db68;outline-offset:-5px}@media(max-width:500px){#caption{font-size:25px;width:calc(100% - 12px)}body.finished .actions{bottom:10%}}@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+
+@font-face{font-family:"Lyon Text Local";src:local("Lyon Text Regular"),local("LyonText-Regular"),local("Lyon Text");font-weight:400;font-style:normal;font-display:swap}
+#caption{font-family:"Lyon Text Local","Lyon Text",Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;letter-spacing:0}
+#upload{font-family:Helvetica,Arial,sans-serif;font-size:19px;font-weight:400;line-height:24px;letter-spacing:.3px;padding:6px 16px;min-width:0;border-radius:999px;background:#40403e;color:#fff;transition:background-color .18s ease}
+#upload:hover{background:#171717}body.finished #upload{font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:20px;padding:6px 14px;background:#40403e;color:#fff;border-radius:999px}body.finished #upload:hover{background:#171717;text-decoration:none}
+
+@font-face{font-family:"Akkurat SC Local";src:local("Akkurat SC Regular"),local("AkkuratSC-Regular"),local("Akkurat SC"),local("AkkuratSC");font-weight:400;font-style:normal;font-display:swap}
+#caption{font-size:clamp(33.6px,3.24vw,43.2px)}
+#upload{font-family:"Akkurat SC Local","Akkurat SC",Helvetica,Arial,sans-serif;font-size:22.8px;line-height:28.8px;padding:7.2px 19.2px;font-weight:400;font-synthesis:none}
+body.finished #upload{font-family:"Akkurat SC Local","Akkurat SC",Helvetica,Arial,sans-serif;font-size:16.8px;line-height:24px;padding:7.2px 16.8px}
+#backdrop{position:fixed;inset:0;width:100%;height:100svh;object-fit:contain;filter:blur(18px);opacity:0;pointer-events:none;z-index:0;transition:opacity .4s ease}
+body.has-image.has-backdrop #backdrop{opacity:.14}main{position:relative;z-index:1}
+@media(max-width:500px){#caption{font-size:30px}}
+
+#upload:hover,body.finished #upload:hover{background:#171717;color:#fff;opacity:1;text-decoration:none}
+
+.processBackdrop,#backdrop{position:fixed;inset:0;width:100%;height:100svh;object-fit:contain;pointer-events:none;z-index:0;opacity:0;filter:blur(var(--softness,12px));transition:opacity 1s ease,filter 1s ease}
+body.has-image.has-backdrop #backdrop{opacity:0}
+body.has-image.has-backdrop #backdrop.is-visible,body.has-image.has-backdrop #backdropNext.is-visible{opacity:.16}
+@media(prefers-reduced-motion:reduce){.processBackdrop,#backdrop{transition:none}}
+
+/* A full-width sheet, using the same voice and typography as the main screen. */
+#evidenceTrigger{display:none;position:fixed;z-index:3;left:50%;bottom:22px;transform:translateX(-50%);align-items:center;gap:12px;padding:6px 12px;background:transparent;color:#000}
+body.finished.evidence-ready #evidenceTrigger{display:flex}#evidenceTrigger svg{width:36px;height:36px}body.evidence-open #evidenceTrigger{visibility:hidden}
+#evidence{--type-title:28px;--type-body:18px;--type-label:var(--type-body);font-weight:400;font-size:var(--type-body);font-synthesis:none;position:fixed;inset:auto 0 0;width:100%;max-width:none;height:92svh;max-height:calc(100svh - 24px);margin:0;padding:0;border:0;border-radius:clamp(32px,6vw,96px) clamp(32px,6vw,96px) 0 0;background:#fafaf8;color:#000;font-family:"Akkurat SC Local","Akkurat SC",Helvetica,Arial,sans-serif;overflow:hidden}
+#evidence[open]{display:flex;flex-direction:column;animation:sheet-in .42s cubic-bezier(.22,.8,.25,1)}#evidence::backdrop{background:rgba(0,0,0,.15)}#evidence.closing{animation:sheet-out .26s ease-in forwards}
+.sheet-header{position:relative;display:flex;align-items:center;min-height:100px;padding:20px 32px 14px;flex-shrink:0}#evidenceClose{position:absolute;left:50%;top:24px;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;width:86px;height:48px;padding:0;background:#000;color:#fff;border:0;border-radius:999px}#evidenceClose svg{width:20px;height:20px}#evidenceClose:hover{opacity:1;background:#000}#evidenceClose:focus:not(:focus-visible){outline:none}#evidenceClose:focus-visible{outline:none;box-shadow:inset 0 0 0 2px #fff}
+.evidence-content{width:min(100%,1100px);margin:0 auto;padding:8px 24px 20px;overflow:auto;overscroll-behavior:contain}
+#scoreReason{font-family:"Lyon Text Local","Lyon Text",Georgia,serif;font-size:var(--type-title);font-weight:400;line-height:1.22;text-align:center;max-width:850px;margin:12px auto 18px}
+.shape-comparison{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin:0 auto 8px;max-width:760px}.shape-comparison figure{margin:0;text-align:center}.shape-comparison figcaption{font:400 var(--type-label)/1.4 "Akkurat SC Local","Akkurat SC",Helvetica,Arial,sans-serif;margin-bottom:8px;color:#000}.shape-comparison canvas{width:clamp(88px,13vw,160px);height:auto;max-width:100%;image-rendering:pixelated;mix-blend-mode:multiply}
+.overlap-legend{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;font:400 var(--type-label)/1.5 "Akkurat SC Local","Akkurat SC",Helvetica,Arial,sans-serif;color:#000;margin:6px 0 16px}#overlapLegend[hidden]{display:none}.overlap-legend i{display:inline-block;width:8px;height:8px;margin-right:6px}.both{background:#222}.input-only{background:#b96153}.template-only{background:#7093ba}
+#candidates{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;list-style:none;max-width:760px;margin:0 auto;padding:14px 0 0;border-top:1px solid #d8d8d3}#candidates li{display:grid;grid-template-columns:auto 1fr;align-items:baseline;gap:6px 12px}#candidates .rank{font-size:var(--type-label);color:#000}#candidates strong{font:400 var(--type-title)/1 "Akkurat SC Local","Akkurat SC",Helvetica,Arial,sans-serif;font-weight:400}#candidates .score{grid-column:1/-1;font:400 var(--type-body)/1.4 "Akkurat SC Local","Akkurat SC",Helvetica,Arial,sans-serif;font-variant-numeric:lining-nums tabular-nums}.similarity-track{grid-column:1/-1;height:2px;background:#deded8}.similarity-fill{display:block;height:100%;background:#aaa}#candidates li:first-child .similarity-fill{background:#333}
+#scoreGap{max-width:720px;text-align:center;margin:16px auto 0;color:#000;font:400 var(--type-body)/1.5 "Akkurat SC Local","Akkurat SC",Helvetica,Arial,sans-serif}
+@keyframes sheet-in{from{transform:translateY(100%)}to{transform:translateY(0)}}@keyframes sheet-out{to{transform:translateY(100%)}}
+@media(max-width:500px){#evidence{height:94svh;--type-title:28px;--type-body:18px;--type-label:var(--type-body)}.sheet-header{padding:20px;min-height:94px}.evidence-content{padding:4px 16px 16px}#scoreReason{margin:14px auto 16px}.shape-comparison{gap:10px}.overlap-legend{gap:10px}#candidates{gap:16px}#evidenceTrigger{bottom:16px}}
+@media(prefers-reduced-motion:reduce){#evidence[open],#evidence.closing{animation:none}}
+
+#feedback{position:fixed;z-index:2;left:50%;bottom:21%;transform:translateX(-50%);width:min(580px,calc(100% - 32px));text-align:center;font:16px/1.4 "Akkurat SC Local",Helvetica,Arial,sans-serif;color:#000}
+#feedback[hidden],#feedbackChoices[hidden],#teachForm[hidden]{display:none}
+.feedback-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+#feedback button{font:inherit;border-radius:999px;padding:8px 18px;background:#000;color:white}#feedback input{font:20px "Akkurat SC Local",Helvetica,Arial,sans-serif;width:58px;padding:6px;text-align:center;border:1px solid #000;border-radius:0;background:white;color:black}
+#feedback label{font:inherit}
+
+#replyStatus{font-size:14px;margin:10px 0 0}#replyStatus:empty{display:none}#feedbackRecord{font-size:var(--type-label);text-align:center;margin:0 auto 16px;max-width:760px}
+body.replying #caption{top:40%}@media(max-height:600px){body.replying #caption{top:30%;font-size:28px}#feedback{bottom:23%}}
+
+#feedbackChoices{gap:40px}#feedback #replyYes,#feedback #replyNo{font:400 28px/1.3 "Lyon Text Local","Lyon Text",Georgia,serif;color:#000;background:transparent;border:0;border-radius:0;padding:8px 12px;min-width:64px}
+#feedback #replyYes:hover,#feedback #replyNo:hover{text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:1px}
+#feedback #replyYes:focus-visible,#feedback #replyNo:focus-visible{outline:1px solid #000;outline-offset:3px}
+
+#teachForm{width:min(280px,100%);margin:0 auto}
+.answer-line{display:flex;align-items:center;border-bottom:1px solid #000;padding:0 0 8px;gap:12px}
+#feedback #correctLetter{appearance:none;-webkit-appearance:none;min-width:0;width:100%;flex:1;border:0;border-radius:0;background:transparent;color:#000;padding:8px 0;font:400 36px/1.2 "Lyon Text Local","Lyon Text",Georgia,serif;text-align:left;outline:none;box-shadow:none;caret-color:#000}
+#correctLetter::placeholder{font:400 20px "Akkurat SC Local","Akkurat SC",Helvetica,Arial,sans-serif;color:#000;opacity:1}
+.answer-line:focus-within{border-bottom-width:2px;padding-bottom:7px}
+#feedback #submitAnswer{display:flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:44px;height:44px;padding:0 0 0 8px;border:0;border-radius:0;background:transparent;color:#000;font:400 18px/1.4 "Akkurat SC Local","Akkurat SC",Helvetica,Arial,sans-serif}
+#submitAnswer:hover{text-decoration:underline;text-underline-offset:4px}#feedback #submitAnswer:focus-visible{outline:1px solid #000;outline-offset:2px}
+
+#aboutProject{max-width:760px;margin:40px auto 20px;padding-top:32px;border-top:1px solid #d8d8d3;font:var(--type-body)/1.6 "Akkurat SC Local",Helvetica,Arial,sans-serif}
+#aboutProject h2{text-align:center;font:400 var(--type-title)/1.25 "Lyon Text Local",Georgia,serif;margin:0 0 20px}
+#aboutProject h3{font:400 var(--type-title)/1.3 "Lyon Text Local",Georgia,serif;margin:28px 0 12px}
+#aboutProject p{margin:0 0 18px}#aboutProject .intro{font:400 var(--type-body)/30px "Lyon Text Local",Georgia,serif}
+@media(max-width:500px){#aboutProject{margin-top:32px}}
+#aboutProject {
+  line-height: 30px;
+}
+#aboutProject strong {
+  font-weight: 400;
+}
+#aboutProject p {
+  margin-bottom: 28px;
+}
+#aboutProject h3 {
+  margin-top: 40px;
+}
+#feedbackRecord p{margin:0;line-height:30px}
+#feedbackRecord p + p{margin-top:28px}
+</style></head><body><img id="backdrop" class="processBackdrop" alt="" aria-hidden="true"><img id="backdropNext" class="processBackdrop" alt="" aria-hidden="true"><main><canvas id="picture" width="500" height="500" aria-label="Your input image"></canvas><h1 id="caption" aria-live="polite" aria-atomic="true"></h1><div class="actions"><button id="upload">Show me something</button><button id="read" disabled>Let me read</button><button id="stop" disabled>Stop</button></div><section id="feedback" aria-label="Your response" hidden><div id="feedbackChoices" class="feedback-row"><button id="replyYes">Yes</button><button id="replyNo">No</button></div><form id="teachForm" hidden><label for="correctLetter" class="sr-only">Your answer: one Latin letter or digit</label><div class="answer-line"><input id="correctLetter" maxlength="1" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Your answer" aria-label="Correct letter or digit"><button id="submitAnswer" type="submit" aria-label="Submit answer" title="Submit answer">enter</button></div></form><p id="replyStatus" role="status" aria-live="polite"></p></section><p id="notice" role="status"></p><span id="imageName" class="sr-only"></span><span id="state" role="status" class="sr-only">READY WHEN YOU ARE</span></main><details><summary>Voice</summary><p id="voiceName"></p><button id="sound" aria-pressed="true">Voice on</button></details><button id="evidenceTrigger" aria-label="See why. Open shape comparison" aria-haspopup="dialog" aria-controls="evidence" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><dialog id="evidence" aria-label="Shape comparison and about this project"><header class="sheet-header"><button id="evidenceClose" aria-label="Close shape comparison"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="m5 5 14 14M19 5 5 19"/></svg></button></header><div class="evidence-content"><p id="scoreReason" class="decision-result"></p><div id="feedbackRecord" hidden></div><div id="shapeComparison" class="shape-comparison"></div><p id="overlapLegend" class="overlap-legend"><span><i class="both"></i>Matching parts</span><span><i class="input-only"></i>Your image only</span><span><i class="template-only"></i>Reference only</span></p><ol id="candidates" aria-label="Closest reference shapes and percentage similarity"></ol><p id="scoreGap"></p><article id="aboutProject" aria-labelledby="aboutTitle">
+<h2 id="aboutTitle">About this project</h2>
+<p><em>Let me see</em> is an interactive experiment that explores how a machine’s way of communicating shapes our perception of its intelligence. It uses a simple character-recognition system that describes what it sees, hesitates and asks users whether its answer is right.</p>
+<h3>Why OCR?</h3>
+<p>OCR (Optical Character Recognition) turns text in images into digital text. I chose it because we associate reading with intelligence. When we read, we do more than recognize letters: we understand and interpret their meaning. This led me to ask: can a computer’s act of recognizing text be considered intelligent?</p>
+<h3>How does this reader work?</h3>
+<p>This prototype reconstructs one part of OCR: visual comparison. It converts an image to black and white, isolates a character and resizes it onto a pixel grid. It then compares the shape with reference letters and digits, measuring how much they overlap.</p>
+<p>The similarity scores and rules I set determine whether it gives an answer or remains uncertain. Typeface, contrast, rotation and image quality can affect the result. The percentages measure shape similarity, not the probability of a correct answer. The system compares patterns; it does not understand what a character means.</p>
+<h3>Why make it a conversation?</h3>
+<p>The system has already calculated its answer before it starts speaking. But its descriptions, hesitation and humor make it seem as though it is looking, thinking and gradually deciding. It asks users to confirm its answer and can offer another candidate, turning a calculation into an exchange.</p>
+<p>I designed the site so that users experience this conversation first, then explore the comparisons behind the answer. This lets them encounter both the impression the machine creates and the mechanism that produces its result.</p>
+<h3>Reading and understanding are not the same.</h3>
+<p>Through this project, I realized that even simple things like hesitation and humor can make a machine seem more human. They can also make its process feel more complex than it actually is. The prototype does not gain understanding through conversation. Yet its language and responses can make a visual comparison feel like an act of thinking.</p>
+<p><strong>How a machine speaks changes how we see it.</strong> The machine’s underlying ability stayed the same. What changed was how it presented that ability and how we might perceive it. I want users to question whether the machine seems intelligent because it recognizes a character, or because it speaks like a person.</p>
+</article></div></dialog><input id="file" type="file" accept="image/*" hidden><script>
+'use strict';
+/* The shape comparisons are real. Speech combines measured geometric observations
+with prewritten conclusions. Observations do NOT cause the template classification.
+Keep this distinction visible in the paired revealed version/documentation.
+The reader accepts one localized Latin glyph. No LLM or general image analysis.
+Speech is provided by the browser/OS; availability and quality vary by device. */
+const $=id=>document.getElementById(id);
+const make=(w,h)=>{let c=document.createElement('canvas');c.width=w;c.height=h;return c};
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+function rand(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return h>>>0}
+function white(c){let x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height)}
+function binary(c){let {width:w,height:h}=c,d=c.getContext('2d').getImageData(0,0,w,h).data,gray=new Uint8Array(w*h),hist=new Uint32Array(256);for(let i=0;i<gray.length;i++){let j=i*4,a=d[j+3]/255;let v=Math.round((.299*d[j]+.587*d[j+1]+.114*d[j+2])*a+255*(1-a));gray[i]=v;hist[v]++}let sum=0;for(let i=0;i<256;i++)sum+=i*hist[i];let bg=0,sb=0,max=-1,threshold=128;for(let t=0;t<255;t++){bg+=hist[t];if(!bg)continue;let fg=gray.length-bg;if(!fg)break;sb+=t*hist[t];let delta=sb/bg-(sum-sb)/fg,v=bg*fg*delta*delta;if(v>max){max=v;threshold=t}}let bright=0;for(let i=0;i<gray.length;i++)if(gray[i]>threshold)bright++;let invert=bright<gray.length*.5;let m=new Uint8Array(gray.length);for(let i=0;i<m.length;i++)m[i]=invert?+(gray[i]>threshold):+(gray[i]<=threshold);return{m,w,h}}
+function bounds(b){let x0=b.w,y0=b.h,x1=-1,y1=-1;for(let y=0;y<b.h;y++)for(let x=0;x<b.w;x++)if(b.m[y*b.w+x]){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y)}return x1<0?null:{x:x0,y:y0,w:x1-x0+1,h:y1-y0+1}}
+const N=32;
+function normalize(b,r){let out=new Uint8Array(N*N),s=26/Math.max(r.w,r.h),tw=r.w*s,th=r.h*s,ox=(N-tw)/2,oy=(N-th)/2;for(let y=0;y<N;y++)for(let x=0;x<N;x++){let sx=Math.floor((x-ox)/s),sy=Math.floor((y-oy)/s);if(sx>=0&&sx<r.w&&sy>=0&&sy<r.h)out[y*N+x]=b.m[(r.y+sy)*b.w+r.x+sx]}return out}
+function overlap(a,b){let both=0,either=0;for(let i=0;i<a.length;i++){both+=a[i]&b[i];either+=a[i]|b[i]}return either?both/either:0}
+let templates=null;
+function getTemplates(){if(templates)return templates;templates=[];let c=make(100,110),x=c.getContext('2d');for(let font of ['Arial','Times New Roman','Courier New'])for(let weight of ['normal','bold'])for(let ch of 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'){white(c);x.fillStyle='#000';x.font=weight+' 76px "'+font+'"';x.textAlign='center';x.textBaseline='middle';x.fillText(ch,50,54);let b=binary(c),r=bounds(b);if(r)templates.push({ch,m:normalize(b,r),aspect:r.w/r.h})}return templates}
+function runs(values,min=1){let out=[],start=-1;for(let i=0;i<=values.length;i++){if(i<values.length&&values[i]>=min){if(start<0)start=i}else if(start>=0){out.push([start,i]);start=-1}}return out}
+function localize(b){let rows=new Uint32Array(b.h);for(let y=0;y<b.h;y++)for(let x=0;x<b.w;x++)rows[y]+=b.m[y*b.w+x];let lines=runs(rows,Math.max(1,Math.floor(b.w*.0008))),merged=[];for(let line of lines){let prev=merged[merged.length-1];if(prev&&line[0]-prev[1]<=2)prev[1]=line[1];else merged.push(line.slice())}let boxes=[];for(let [y0,y1]of merged){if(y1-y0<4)continue;let cols=new Uint32Array(b.w);for(let x=0;x<b.w;x++)for(let y=y0;y<y1;y++)cols[x]+=b.m[y*b.w+x];for(let [x0,x1]of runs(cols)){if(x1-x0<1)continue;let top=y1,bot=y0,ink=0;for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++)if(b.m[y*b.w+x]){top=Math.min(top,y);bot=Math.max(bot,y);ink++}if(ink<5||bot-top<3)continue;boxes.push({x:x0,y:top,w:x1-x0,h:bot-top+1})}}return boxes.slice(0,360)}
+// Thresholds are design choices, not calibrated probabilities. Rank distinct characters,
+// not alternate font templates of the same character, before measuring the gap.
+function decisionTier(score,gap){return score>=.72&&gap>=.06?'clear':score>=.52?'ambiguous':score>=.30?'low':'unrecognized'}
+function recognize(c,trace){let b=binary(c),boxes=localize(b),ts=getTemplates();if(boxes.length===2){let pair=boxes.slice().sort((a,b)=>a.y-b.y),dot=pair[0],stem=pair[1],overlapX=Math.min(dot.x+dot.w,stem.x+stem.w)-Math.max(dot.x,stem.x),gapY=stem.y-dot.y-dot.h;if(dot.h<stem.h*.45&&overlapX>=Math.min(dot.w,stem.w)*.4&&gapY>=0&&gapY<stem.h*.65)boxes=[bounds(b)]}if(boxes.length===1){let all=bounds(b);if(all&&all.w<=boxes[0].w*1.5)boxes=[all]}if(trace)trace.binary=b;return{width:b.w,height:b.h,items:boxes.map(r=>{let m=normalize(b,r),byChar=new Map(),byTemplate=new Map();for(let t of ts){let score=overlap(m,t.m);if(score>(byChar.get(t.ch)||0)){byChar.set(t.ch,score);byTemplate.set(t.ch,t)}}let ranked=Array.from(byChar,([ch,score])=>({ch,score})).sort((a,b)=>b.score-a.score),best=ranked[0]||{ch:'?',score:0},second=ranked[1]||{ch:'?',score:0},gap=best.score-second.score,tier=decisionTier(best.score,gap);if(trace)trace.regions.push({box:r,mask:m,comparisons:ranked.slice(0,2).map(v=>({ch:v.ch,score:v.score,mask:byTemplate.get(v.ch).m}))});return{...r,mask:m,ranked:ranked.slice(0,3).map(v=>({...v,mask:byTemplate.get(v.ch).m})),ch:tier==='clear'||tier==='ambiguous'?best.ch:'?',candidate:best.ch,secondCandidate:second.ch,score:best.score,gap,tier}})}}
+
+
+/* Spoken observations below come from simple binary-image measurements.
+   Classification still uses template overlap. These observations are not a
+   causal explanation of that classifier, nor general semantic image analysis. */
+function observe(c){
+ const b=binary(c),r=bounds(b);
+ if(!r)return ['I cannot pick out a distinct shape here.','I do not see a clear outline to follow.'];
+ const m=normalize(b,r),rows=[],cols=[];let ink=0;
+ for(let y=0;y<N;y++){let first=N,last=-1,count=0,maxRun=0,run=0;for(let x=0;x<N;x++){if(m[y*N+x]){first=Math.min(first,x);last=x;count++;run++;maxRun=Math.max(maxRun,run);ink++}else run=0}rows.push({first,last,count,maxRun,span:last<0?0:last-first+1})}
+ for(let x=0;x<N;x++){let n=0;for(let y=0;y<N;y++)n+=m[y*N+x];cols.push(n)}
+ const occupied=rows.map((v,i)=>v.count?i:-1).filter(i=>i>=0),top=occupied[0],bottom=occupied.at(-1),height=bottom-top+1;
+ const width=Math.max(...rows.map(v=>v.last))-Math.min(...rows.filter(v=>v.count).map(v=>v.first))+1;
+ function avgSpan(lo,hi){let selected=rows.slice(top+Math.floor(height*lo),top+Math.ceil(height*hi)).filter(v=>v.count);return selected.reduce((n,v)=>n+v.span,0)/Math.max(1,selected.length)}
+ const upper=avgSpan(.08,.3),lower=avgSpan(.7,.92);
+ let holes=0,components=0;const seen=new Uint8Array(N*N);
+ for(let at=0;at<m.length;at++){if(seen[at])continue;const value=m[at],stack=[at];seen[at]=1;let area=0,border=false;while(stack.length){let p=stack.pop(),x=p%N,y=Math.floor(p/N);area++;if(x===0||y===0||x===N-1||y===N-1)border=true;for(let next of [x>0?p-1:-1,x<N-1?p+1:-1,y>0?p-N:-1,y<N-1?p+N:-1])if(next>=0&&!seen[next]&&m[next]===value){seen[next]=1;stack.push(next)}}if(value&&area>=3)components++;if(!value&&!border&&area>=4)holes++}
+ const midRows=rows.slice(top+Math.floor(height*.3),top+Math.ceil(height*.8));
+ const across=midRows.some(v=>v.maxRun>=width*.65&&v.maxRun>=height*.3);
+ let lines=[];
+ if(r.h>r.w*1.45)lines.push('The shape is much taller than it is wide.');
+ else if(r.w>r.h*1.45)lines.push('It spreads wider than it rises.');
+ else lines.push('Its height and width are fairly similar.');
+ if(lower>upper*1.55)lines.push('It looks narrower near the top, and opens out toward the bottom.');
+ else if(upper>lower*1.55)lines.push('It spreads out near the top, then narrows toward the bottom.');
+ if(holes===1)lines.push('There seems to be one enclosed space inside the shape.');
+ else if(holes===2)lines.push('I can make out two enclosed spaces inside it.');
+ else if(holes>2)lines.push('I can make out several small enclosed spaces.');
+ if(across)lines.push('There seems to be a stroke running across the middle.');
+ if(components>1)lines.push(components===2?'I can see two separate parts.':'The image seems to break into several separate parts.');
+ if(lines.length<3){let left=cols.slice(0,N/2).reduce((a,b)=>a+b,0),right=ink-left;lines.push(left>right*1.5?'More of the shape is gathered on the left.':right>left*1.5?'More of the shape is gathered on the right.':holes===0?'I do not see a clearly enclosed space inside it.':'The marks are spread across both sides.');}
+ return lines.slice(0,4);
+}
+// One consistent voice; image evidence and feedback shape the delivery.
+// Randomness varies phrasing, never recognition or measured scores.
+const lastVariant={};
+function pick(key,pool){let n=Math.floor(Math.random()*pool.length);if(pool.length>1&&lastVariant[key]===n)n=(n+1)%pool.length;lastVariant[key]=n;return pool[n]}
+const openings=['Let me see.','Let me have a look.','Let’s see what’s here.','Give me a moment.','Let me look a little closer.','Okay, let’s have a look.'];
+// Keep the selected synthesis voice throughout the session.
+let encounter=0,sessionVoice=null;
+function letterName(ch){return /^[a-z]$/.test(ch)?'lowercase '+ch:/^[0-9]$/.test(ch)?'the number '+ch:'the letter '+ch}
+function beat(text,mood='plain'){
+ const styles={plain:[1,0,330],bright:[1.07,.09,280],thinking:[.88,-.035,800],aside:[1.04,-.07,480],resolve:[.96,-.025,480]};
+ const [rate,pitch,pause]=styles[mood];
+ return {text,rate:(rate+(Math.random()-.5)*.04)*1.05,pitch:1+pitch,pause:Math.round((pause+Math.floor(Math.random()*240))*.95)};
+}
+// Local overlap supplies a concrete reason for reconsideration. These are
+// descriptions of fixed comparisons, not a claim that the classifier rethinks.
+function comparisonClues(item){
+ const ranked=item.ranked||[],first=ranked[0],second=ranked[1];
+ if(!item.mask||!first?.mask||!second?.mask)return null;
+ const bands=[['top',0,11],['middle',11,21],['bottom',21,N]];
+ function measure(ref,start,end){let both=0,union=0;for(let y=start;y<end;y++)for(let x=0;x<N;x++){const i=y*N+x,a=item.mask[i],b=ref[i];both+=a&&b?1:0;union+=a||b?1:0}return{score:union?both/union:0,union}}
+ const parts=bands.map(([name,start,end])=>{const a=measure(first.mask,start,end),b=measure(second.mask,start,end);return{name,delta:a.score-b.score,reliable:Math.min(a.union,b.union)>=8}}).filter(p=>p.reliable);
+ return {otherPart:parts.filter(p=>p.delta<=-.08).sort((a,b)=>a.delta-b.delta)[0]?.name,
+ bestPart:parts.filter(p=>p.delta>=.08).sort((a,b)=>b.delta-a.delta)[0]?.name};
+}
+// Keep only the most recent completed encounter in this tab. No persistent storage.
+let lastEncounter=null;
+function sameImage(a,b){
+ if(!a||!b||a.w!==b.w||a.h!==b.h||a.pixels.length!==b.pixels.length)return false;
+ for(let i=0;i<a.pixels.length;i++)if(a.pixels[i]!==b.pixels[i])return false;
+ return true;
+}
+function encounterRelation(item,previous){
+ if(!previous)return null;
+ if(sameImage(item.imageRecord,previous.imageRecord))return {kind:'repeat',count:previous.repeatCount+1};
+ if(!item.mask||!previous.mask||item.multiple||previous.multiple)return null;
+ const similarity=overlap(item.mask,previous.mask);
+ if(similarity<.72)return null;
+ const tiers={unrecognized:0,low:1,ambiguous:2,clear:3};
+ const easier=item.candidate===previous.candidate&&item.score>=previous.score&&item.gap>=previous.gap+.04&&tiers[item.tier]>=tiers[previous.tier];
+ return {kind:similarity===1?'same-shape':'similar',easier,
+ harder:item.candidate===previous.candidate&&item.gap<=previous.gap-.04&&item.score<=previous.score};
+}
+function rememberEncounter(item){
+ if(!item?.imageRecord)return;
+ const relation=encounterRelation(item,lastEncounter);
+ lastEncounter={imageRecord:item.imageRecord,mask:item.mask?item.mask.slice():null,candidate:item.candidate,score:item.score,gap:item.gap,tier:item.tier,multiple:!!item.multiple,repeatCount:relation?.kind==='repeat'?relation.count:1};
+}
+function continuityLines(item){
+ const relation=encounterRelation(item,lastEncounter);
+ if(!relation)return [];
+ if(relation.kind==='repeat')return [pick('repeatOpening',relation.count>2?
+ ['This one again? You’re keeping me on my toes.','We’re back to this one. Let me look again.']:
+ ['The same image again? Want me to take another look?','I remember this one. Shall we give it another look?']),
+ item.mask?pick('repeatMeasurement',['The shapes still overlap in the same way.','The match hasn’t changed. Let me look through it again.']):'Let me try looking again.'];
+ const lines=[relation.kind==='same-shape'?'This looks different as an image, but the shape I compare is the same.':
+ pick('similarOpening',['This reminds me of the last one, but the shape has changed a little.','Wait… close to the last one, but not quite the same shape.'])];
+ if(relation.easier)lines.push('The closest match has a bigger lead this time. That makes choosing easier.');
+ else if(relation.harder)lines.push('The candidates are closer together this time. This one takes a little more care.');
+ return lines;
+}
+function narrative(item){
+ const tier=item.tier||decisionTier(item.score,item.gap||0),out=[];
+ const add=(text,mood)=>out.push(beat(text,mood||(text.includes('?')?'thinking':text.includes('!')?'bright':'plain')));
+ const hum=()=>out.push({...beat(pick('humCaption',['Hmm…','Mmm…','Hmm…?']),'thinking'),kind:'hum',contour:Math.floor(Math.random()*4)});
+ const letter=letterName(item.candidate||item.ch),other=letterName(item.secondCandidate||'?');
+ const hasCandidate=/^[a-zA-Z0-9]$/.test(item.candidate||'');
+ const hasOther=/^[a-zA-Z0-9]$/.test(item.secondCandidate||'')&&item.secondCandidate!==item.candidate;
+ const clues=comparisonClues(item);
+ let openingPool=openings;
+ if(encounter++>0&&Math.random()<.25)openingPool=['Let me look at this one.','Let’s see this one.','Give me a moment with this.'];
+ const continuity=continuityLines(item);
+ if(continuity.length){continuity.forEach((line,i)=>add(line,i?'plain':'thinking'))}else add(pick('opening',openingPool),'bright');
+ if(item.multiple){
+  add('There’s more than one shape here.','thinking');
+  if(Math.random()<.3)add('I’m trying to pick one, and they’ve brought company.','aside');
+  add('Could you show me one character at a time?','resolve');return out;
+ }
+ // Select a measured observation, favoring a specific feature over proportions.
+ const observations=item.observations||[],specific=observations.filter(t=>/enclosed|middle|narrows|narrower|separate|left|right/.test(t));
+ if(observations.length&&continuity.length<2){const observation=pick('observation',specific.length?specific:observations).replace('There seems to be','I can see').replace('The shape is much','It’s much').replace('I can make out','I can see');add(observation,'plain')}
+ if(tier==='ambiguous'&&hasOther){
+  const reverse=Math.random()<clamp(.94-(item.gap||0)*2,.5,.94);
+  if(reverse){
+   add(pick('firstA',['My first thought is {x}.','Could it be {x}?','Is it {x}?']).replace('{x}',letter),'thinking');
+   if(clues?.otherPart)add('But the '+clues.otherPart+' lines up better with '+other+'. Wait…','thinking');
+   else if(item.gap<.06)add(pick('closeRival',['But {x} is almost as close. Have I picked too quickly?','Or {x}? There’s very little between the two.','Hold on… {x} is close behind.']).replace('{x}',other),'thinking');
+   else add('Parts overlap with '+other+' too. Let me compare the whole shape.','thinking');
+   if(Math.random()<.6)hum();
+   if(clues?.bestPart)add('Looking at the '+clues.bestPart+', '+letter+' fits better there!','bright');
+   else add(pick('wholeMatch',['Oh! Across the whole shape, {x} still overlaps more.','Wait… the whole shape is closer to {x}.']).replace('{x}',letter),'bright');
+   if(Math.random()<.45)add(pick('reversalJoke',['I’ve taken the scenic route back to my first guess.','I nearly talked myself out of that one.','A lot of back and forth for one little shape.']),'aside');
+   add(pick('return',['So… {x}, I think. I’m not completely sure.','I’m back to {x}. Still a guess, though.','I’ll stay with {x}. Tentatively.']).replace('{x}',letter),'resolve');
+  }else{
+   add('The closest shape I have is '+letter+'.','thinking');
+   add(item.gap<.06?'But '+other+' is close behind. There isn’t much between them.':'But quite a few parts still don’t line up.','thinking');
+   if(Math.random()<.4)hum();add(pick('tentative',['I’ll call it {x} for now.','I’m leaning toward {x}.','My best guess is {x}.']).replace('{x}',letter),'resolve');
+  }
+ }else if(tier==='clear'){
+  add(pick('clearEvidence',['The whole shape lines up well with {x}.','{x} fits the outline well.','The closest match is {x}, with a clear lead.']).replace('{x}',letter),'plain');
+  if(Math.random()<.2){add('Wait. Am I rushing this?','thinking');add('No, the next closest shape is a fair way behind.','resolve');if(Math.random()<.5)add('For once, I can leave my first answer alone.','aside')}
+  add(pick('clear',['I’m going with {x}.','Ah, yes! I’d read that as {x}.','{x}. That’s my reading.']).replace('{x}',letter),'resolve');
+ }else if(tier==='low'){
+  if(hasCandidate){
+   add(pick('lowGuess',['At first glance, maybe {x}?','There’s a little of {x} in this…','Could this be {x}?']).replace('{x}',letter),'thinking');if(Math.random()<.6)hum();
+   add(pick('withdraw',['No… too much of the shape doesn’t line up.','Wait. That match leaves too much unexplained.','Actually… the overlap is too weak to call it.']),'thinking');
+   if(Math.random()<.4)add(pick('lowJoke',['I was filling in the gaps a little too enthusiastically.','I think I wanted an answer more than I had one.','That guess was doing a lot of wishful thinking.']),'aside');
+  }
+  add(pick('low',['I’ll leave this one open.','I can’t name it confidently.','I’m taking that guess back. I’m not sure.']),'resolve');
+ }else{
+  if(item.mask){hum();add('None of my reference shapes overlaps very much.','thinking');if(Math.random()<.35)add('I can keep looking thoughtful, but that won’t make a match.','aside')}
+  add(pick('unknown',['I don’t have a reading for this one.','I’m drawing a blank here.','I can’t put a name to this shape.']),'resolve');
+ }
+ return out;
+}
+
+// Nonverbal hums bypass speech synthesis completely: never speak H/M letters.
+// Locally synthesized voiced harmonics with gentle breath and pitch contours.
+let humContext=null,humStop=null;
+function unlockHum(){
+ try{const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;
+ if(!humContext)humContext=new Audio();
+ if(humContext.state==='suspended')humContext.resume().catch(()=>{});
+ }catch{}
+}
+function stopHum(){if(humStop){humStop();humStop=null}}
+function playHum(contour){
+ stopHum();const ctx=humContext;
+ if(!ctx||ctx.state!=='running')return 1050;
+ const shapes=[[0,.01,-.10],[0,.10,.03],[0,-.07,.09],[0,.04,-.16]],shape=shapes[contour%4];
+ const duration=[.8,1.05,1.25,.95][contour%4],t=ctx.currentTime,base=165;
+ const gain=ctx.createGain(),filter=ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=850;
+ gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(.17,t+.12);gain.gain.setValueAtTime(.14,t+duration*.65);gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
+ filter.connect(gain);gain.connect(ctx.destination);
+ const nodes=[];
+ for(let h=1;h<=5;h++){
+  const osc=ctx.createOscillator(),level=ctx.createGain();osc.type='sine';level.gain.value=[.7,.24,.12,.06,.025][h-1];
+  osc.frequency.setValueAtTime(base*h,t);osc.frequency.linearRampToValueAtTime(base*h*(1+shape[1]),t+duration*.5);osc.frequency.linearRampToValueAtTime(base*h*(1+shape[2]),t+duration);
+  osc.connect(level);level.connect(filter);osc.start(t);osc.stop(t+duration+.03);nodes.push([osc,level]);
+ }
+ let stopped=false;const cleanup=()=>{if(stopped)return;stopped=true;for(const [osc,level] of nodes){try{osc.stop()}catch{}osc.disconnect();level.disconnect()}filter.disconnect();gain.disconnect()};
+ nodes[0][0].onended=()=>{cleanup();if(humStop===cleanup)humStop=null};humStop=cleanup;
+ return duration*1000+80;
+}
+
+// These frames use the recognizer's real binary mask, normalized regions, and
+// highest-scoring templates. Computation finishes first; their slow reveal is
+// synchronized to the narration as a presentation, not a live computation trace.
+let backgroundFrames=[],backgroundStep=-1,backgroundLayer=0,backgroundRevision=0;
+function maskImage(mask,w,h){const c=make(w,h),x=c.getContext('2d'),d=x.createImageData(w,h);for(let i=0;i<mask.length;i++){let v=mask[i]?0:255,j=i*4;d.data[j]=d.data[j+1]=d.data[j+2]=v;d.data[j+3]=255}x.putImageData(d,0,0);return c}
+function regionImage(regions,compareRank){const count=regions.length,cols=Math.ceil(Math.sqrt(count)),rows=Math.ceil(count/cols),cell=128,c=make(cols*cell,rows*cell),x=c.getContext('2d');white(c);regions.forEach((region,i)=>{const ref=compareRank===null?null:(region.comparisons[compareRank]||region.comparisons[0]);let ox=(i%cols)*cell,oy=Math.floor(i/cols)*cell;for(let y=0;y<N;y++)for(let xx=0;xx<N;xx++){const p=y*N+xx,a=region.mask[p],b=ref?ref.mask[p]:0;if(!a&&!b)continue;x.fillStyle=!ref?'#111':a&&b?'#111':a?'#ad5049':'#6687bb';x.fillRect(ox+xx*4,oy+y*4,4,4)}});return c}
+function prepareBackdrops(c,trace){clearBackdrops();backgroundFrames=[{src:c.toDataURL('image/png'),blur:18},{src:maskImage(trace.binary.m,trace.binary.w,trace.binary.h).toDataURL('image/png'),blur:12}];if(trace.regions.length){backgroundFrames.push({src:regionImage(trace.regions,null).toDataURL('image/png'),blur:5});if(trace.regions.some(r=>r.comparisons.length>1))backgroundFrames.push({src:regionImage(trace.regions,1).toDataURL('image/png'),blur:7});if(trace.regions.some(r=>r.comparisons.length))backgroundFrames.push({src:regionImage(trace.regions,0).toDataURL('image/png'),blur:7})}showBackdrop(0)}
+function clearBackdrops(){backgroundRevision++;backgroundFrames=[];backgroundStep=-1;backgroundLayer=0;for(const id of ['backdrop','backdropNext']){let img=$(id);img.onload=null;img.classList.remove('is-visible');img.removeAttribute('src')}document.body.classList.remove('has-backdrop')}
+function showBackdrop(step){if(!backgroundFrames.length)return;step=Math.max(0,Math.min(step,backgroundFrames.length-1));if(step===backgroundStep)return;const version=++backgroundRevision,target=backgroundStep<0?0:1-backgroundLayer,ids=['backdrop','backdropNext'],img=$(ids[target]),other=$(ids[1-target]),frame=backgroundFrames[step];backgroundStep=step;backgroundLayer=target;const reveal=()=>{if(version!==backgroundRevision)return;img.onload=null;img.classList.add('is-visible');other.classList.remove('is-visible');document.body.classList.add('has-backdrop')};img.style.setProperty('--softness',frame.blur+'px');img.onload=reveal;img.src=frame.src;if(img.complete&&img.naturalWidth)reveal()}
+function syncBackdrop(){const step=Math.floor(index*(backgroundFrames.length-1)/Math.max(1,sequence.length-1));showBackdrop(step)}
+
+let source=null,current=null,runId=0,loadId=0,timer=null,watchdog=null,voiceOn=true,running=false,sequence=[],index=0;const synth=typeof speechSynthesis!=='undefined'?speechSynthesis:null;let voices=[];
+function preferredVoice(){return voices.find(v=>v.localService&&v.lang==='en-US')||voices.find(v=>v.localService)||voices[0]||null} function refreshVoices(){voices=synth?synth.getVoices().filter(v=>v.lang.toLowerCase().startsWith('en')):[];const v=preferredVoice();$('voiceName').textContent=v?v.name+' / '+v.lang:'Browser default — name unavailable';if(!synth)$('notice').textContent='Voice is unavailable here. Subtitles will still play.'}if(synth)synth.addEventListener('voiceschanged',refreshVoices);refreshVoices();
+function setCaption(text){$('caption').textContent=text;$('caption').classList.remove('change');void $('caption').offsetWidth;$('caption').classList.add('change')}
+function endRun(){hideFeedback();stopHum();document.body.classList.remove('finished');$('upload').textContent='Show me something';runId++;clearTimeout(timer);clearTimeout(watchdog);if(synth)synth.cancel();running=false;document.body.classList.remove('speaking');$('stop').disabled=true;$('read').disabled=!current;$('read').textContent='Read again'}
+function resetEvidence(){
+ closeEvidence(true);document.body.classList.remove('evidence-ready','evidence-open');$('candidates').replaceChildren();
+}
+function comparisonCanvas(input,reference){
+ const c=make(N,N),x=c.getContext('2d');white(c);
+ for(let y=0;y<N;y++)for(let xx=0;xx<N;xx++){
+  const i=y*N+xx,a=input&&input[i],b=reference&&reference[i];if(!a&&!b)continue;
+  x.fillStyle=!reference?'#222':a&&b?'#222':a?'#b96153':'#7093ba';x.fillRect(xx,y,1,1);
+ }
+ return c;
+}
+function renderEvidence(item){
+ resetEvidence();const ranked=item&&item.ranked||[],hasRanking=ranked.length>0;
+ const pct=v=>(v*100).toFixed(1)+'%';
+ if(item?.evidenceReleased)document.body.classList.add('evidence-ready');
+ $('shapeComparison').replaceChildren();$('overlapLegend').hidden=!hasRanking;
+ if(hasRanking){
+  const best=item.userCorrection||ranked[0];
+  for(const [label,input,reference] of [['Your shape',item.mask,null],['Reference “'+best.ch+'”',best.mask,null],['Shapes combined',item.mask,best.mask]]){
+   const fig=document.createElement('figure'),caption=document.createElement('figcaption'),canvas=comparisonCanvas(input,reference);caption.textContent=label;canvas.setAttribute('role','img');canvas.setAttribute('aria-label',label);fig.append(caption,canvas);$('shapeComparison').append(fig);
+  }
+ }
+ for(const [i,r] of ranked.entries()){
+  const row=document.createElement('li'),rank=document.createElement('span'),glyph=document.createElement('strong'),score=document.createElement('span'),track=document.createElement('span'),fill=document.createElement('span');
+  rank.className='rank';rank.textContent='#'+(i+1);glyph.textContent=r.ch;score.className='score';score.textContent=pct(r.score)+' similar';track.className='similarity-track';fill.className='similarity-fill';fill.style.width=(r.score*100)+'%';track.append(fill);row.append(rank,glyph,score,track);$('candidates').append(row);
+ }
+ let reason='',explanation='';
+ if(item.multiple)reason='I found several shapes. Show me one character at a time.';
+ else if(!hasRanking)reason='I couldn’t find a shape to compare.';
+ else{
+  const ch=item.candidate,similarity=pct(item.score);
+  reason='Closest match: “'+ch+'”. '+similarity+' similar.';
+  if(item.tier==='clear'){
+   explanation='The shapes overlap closely. The other letters and digits match less well.';
+  }else if(item.tier==='ambiguous'){
+   const second=ranked[1];
+   explanation=item.gap<.06&&second?
+    '“'+second.ch+'” is '+pct(second.score)+' similar too. The scores are too close for a clear choice.':
+    '“'+ch+'” matches best, but several parts of the shapes don’t overlap. I’m not sure.';
+  }else if(item.tier==='low'){
+   explanation='Only some parts overlap. I can’t confidently name this shape.';
+  }else{
+   explanation='Very few parts overlap. I don’t recognize this shape.';
+  }
+
+ }
+ $('feedbackRecord').replaceChildren(...(item.feedbackNote||'').split('\n\n').filter(Boolean).map(text=>{const p=document.createElement('p');p.textContent=text;return p}));$('feedbackRecord').hidden=!item.feedbackNote;
+ $('scoreReason').textContent=reason;$('scoreGap').textContent=explanation;$('scoreGap').hidden=!explanation;
+}
+let sheetCloseTimer=null;
+function openEvidence(){
+ 
+ if(!document.body.classList.contains('evidence-ready'))return;
+ clearTimeout(sheetCloseTimer);$('evidence').classList.remove('closing');
+ if(!$('evidence').open)$('evidence').showModal();
+ document.body.classList.add('evidence-open');$('evidenceTrigger').setAttribute('aria-expanded','true');$('evidenceClose').focus();
+}
+function closeEvidence(immediate=false){
+ clearTimeout(sheetCloseTimer);
+ const finish=()=>{$('evidence').classList.remove('closing');if($('evidence').open)$('evidence').close();document.body.classList.remove('evidence-open');$('evidenceTrigger').setAttribute('aria-expanded','false')};
+ if(immediate||!$('evidence').open||matchMedia('(prefers-reduced-motion: reduce)').matches){finish();return}
+ $('evidence').classList.add('closing');sheetCloseTimer=setTimeout(finish,260);
+}
+$('evidenceTrigger').onclick=openEvidence;$('evidenceClose').onclick=()=>closeEvidence();
+$('evidence').addEventListener('cancel',e=>{e.preventDefault();closeEvidence()});
+$('evidence').addEventListener('click',e=>{if(e.target!==$('evidence'))return;const r=$('evidence').getBoundingClientRect();if(e.clientY<r.top||e.clientY>r.bottom||e.clientX<r.left||e.clientX>r.right)closeEvidence()});
+function choose(c,name){document.body.classList.add('has-image');endRun();source=c;current=null;$('notice').textContent='';$('imageName').textContent=name;const trace={regions:[]};const r=recognize(c,trace);prepareBackdrops(c,trace);if(!r.items.length){current={ch:'?',score:0,gap:0,tier:'unrecognized'};setCaption('');$('state').textContent='NO LETTER FOUND';$('notice').textContent='Try a single printed Latin letter or digit on a plain background.';}else if(r.items.length>1){current={ch:'?',score:0,gap:0,tier:'unrecognized',multiple:true};setCaption('');$('state').textContent='MORE THAN ONE SHAPE';$('notice').textContent='Crop the image to one letter or digit, then upload it again.';}else{current=r.items[0];setCaption('');$('state').textContent='READY WHEN YOU ARE';if(!synth)$('notice').textContent='Voice is unavailable here. Subtitles will still play.'}if(current){current.observations=observe(c);current.imageRecord={w:c.width,h:c.height,pixels:c.getContext('2d').getImageData(0,0,c.width,c.height).data};}renderEvidence(current);$('read').disabled=!current;$('read').textContent='Let me read'}
+function sample(ch){const c=make(400,400),x=c.getContext('2d');white(c);x.fillStyle='#000';x.textAlign='center';x.textBaseline='middle';x.font='260px Arial';x.fillText(ch,200,205);choose(c,'Specimen / '+ch)}
+function playLine(token){if(token!==runId||!running)return;if(index>=sequence.length){if(turnKind==='initial'){rememberEncounter(current);}running=false;document.body.classList.remove('speaking');$('stop').disabled=true;$('read').disabled=false;$('read').textContent='Read again';$('state').textContent='YOUR TURN';finishFeedbackTurn();return}const line=sequence[index],text=line.text;syncBackdrop();setCaption(text);$('state').textContent='LOOKING AT YOUR IMAGE';let done=false;function next(){if(done||token!==runId)return;done=true;clearTimeout(timer);clearTimeout(watchdog);document.body.classList.remove('speaking');index++;timer=setTimeout(()=>playLine(token),line.pause)}function silent(){document.body.classList.remove('speaking');timer=setTimeout(next,Math.max(1700,text.split(' ').length*380))}
+if(line.kind==='hum'){let duration=1050;if(voiceOn){try{duration=playHum(line.contour)}catch{stopHum()}}timer=setTimeout(next,duration);return}
+if(voiceOn&&synth&&typeof SpeechSynthesisUtterance!=='undefined'){refreshVoices();const u=new SpeechSynthesisUtterance(text);sessionVoice=sessionVoice||preferredVoice();u.lang=sessionVoice?sessionVoice.lang:'en-US';u.rate=line.rate;u.pitch=line.pitch;u.volume=1;if(sessionVoice)u.voice=sessionVoice;u.onstart=()=>{if(token===runId)document.body.classList.add('speaking')};u.onend=next;u.onerror=()=>{if(token!==runId||done)return;clearTimeout(watchdog);$('notice').textContent='Voice could not play. Continuing with subtitles.';silent()};watchdog=setTimeout(()=>{if(token!==runId||done)return;u.onend=null;u.onerror=null;synth.cancel();$('notice').textContent='Voice did not respond. Continuing with subtitles.';silent()},Math.max(14000,text.split(' ').length*1100));try{synth.speak(u)}catch{clearTimeout(watchdog);silent()}}else silent()}
+function start(){if(!current)return;unlockHum();endRun();turnKind='initial';feedbackStage='none';rejected=[];delete current.userCorrection;delete current.feedbackNote;current.evidenceReleased=false;renderEvidence(current);sequence=narrative(current);activeGuess=current.candidate;nextFeedback=(current.mask&&!current.multiple)?(['clear','ambiguous'].includes(current.tier)?'first':'teach'):'done';if(nextFeedback==='first')sequence.push(beat(pick('askConfirmation',['Did I get that right?','Is that what you see?','Does that look right to you?']),'thinking'));else if(nextFeedback==='teach')sequence.push(beat('What is it, then?','thinking'));index=0;showBackdrop(0);running=true;$('read').disabled=true;$('stop').disabled=false;$('notice').textContent='';setCaption('');const token=runId;timer=setTimeout(()=>playLine(token),500)}
+// Turn-taking: one retry, then a user-supplied character. Measurements never change.
+let feedbackStage='none',nextFeedback='done',turnKind='initial',activeGuess=null,rejected=[];
+function hideFeedback(){$('feedback').hidden=true;document.body.classList.remove('replying')}
+function finishFeedbackTurn(){
+ feedbackStage=nextFeedback;
+ if(feedbackStage==='done'){hideFeedback();if(current)current.evidenceReleased=true;document.body.classList.add('finished','evidence-ready');$('upload').textContent='Show another';return}
+ document.body.classList.remove('finished');
+ $('feedback').hidden=false;document.body.classList.add('replying');
+ const teaching=feedbackStage==='teach';$('feedbackChoices').hidden=teaching;$('teachForm').hidden=!teaching;
+ $('replyNo').textContent='No';
+ $('replyStatus').textContent='';
+ if(teaching)$('correctLetter').focus();
+}
+function speakFeedback(lines,after){
+ endRun();turnKind='feedback';nextFeedback=after;sequence=lines.map((line)=>beat(line,/\?/.test(line)?'thinking':/!/.test(line)?'bright':'plain'));index=0;running=true;feedbackStage='speaking';$('read').disabled=true;$('stop').disabled=false;playLine(runId);
+}
+function respondFeedback(yes){
+ if(running||!['first','second'].includes(feedbackStage)||!current)return;
+ const stage=feedbackStage;
+ if(yes){
+  current.feedbackNote='You confirmed “'+activeGuess+'”.';
+  renderEvidence(current);
+  speakFeedback([stage==='second'?pick('retryConfirmed',['Ah, {x}! Thanks for the second look.','{x}, then. Got there on the second try.','Right, {x}. My first guess was a little eager.']).replace('{x}',letterName(activeGuess)):current.tier==='clear'?pick('clearConfirmed',['Good! We’re seeing the same thing.','That fits. Thanks for confirming.','All right! I’ll stick with that.']):pick('confirmed',['Oh, good! I wasn’t certain about that one.','That helps. The two shapes were close.','Okay! A hesitant guess, but it landed.'])],'done');return;
+ }
+ rejected.push(activeGuess);current.feedbackNote='You said it isn’t '+rejected.map(x=>'“'+x+'”').join(' and ')+'.';renderEvidence(current);
+ const alternate=current.ranked?.find(r=>!rejected.includes(r.ch));
+ if(stage==='first'&&alternate){
+  const prior=activeGuess;activeGuess=alternate.ch;
+  speakFeedback([current.tier==='clear'?pick('confidentMiss',['Oh! I said that rather confidently, didn’t I?','Well, that confidence arrived a little early.','Ah, no? The overlap had me convinced.']):pick('uncertainMiss',['Okay. We can rule out {x}.','Not {x}, then. Let me look at the next match.','All right. I’ll let go of {x}.']).replace('{x}',letterName(prior)),
+   pick('retryQuestion',['My next closest match is {x}. Is that any closer?','Next in the comparison is {x}. Could it be that?','What about {x}? That’s the next closest shape.']).replace('{x}',letterName(activeGuess))],'second');
+ }else speakFeedback([pick('askCorrection',['Then I’m missing something. What is it?','Two guesses down. What do you see?','I’ll stop guessing. What is it?'])],'teach');
+}
+function teachCharacter(value){
+ if(running||feedbackStage!=='teach'||!current?.mask)return;
+ const ch=value.trim();if(!/^[A-Za-z0-9]$/.test(ch)){$('replyStatus').textContent='Enter one Latin letter or digit, such as A, a or 7.';return}
+ let best=null;for(const template of getTemplates())if(template.ch===ch){const score=overlap(current.mask,template.m);if(!best||score>best.score)best={ch,score,mask:template.m}}
+ if(!best){$('replyStatus').textContent='I don’t have a reference for that character.';return}
+ current.userCorrection=best;current.feedbackNote='Your answer: “'+ch+'”. '+(best.score*100).toFixed(1)+'% similar. The images show your answer.\n\nThe scores below show my original matches.';
+ renderEvidence(current);$('correctLetter').value='';
+ speakFeedback([letterName(ch)+'? '+(ch===current.candidate?'That was my closest shape, though I hadn’t settled it.':'That wasn’t my closest match.'),
+ 'I’ve put your answer beside the image.',
+ 'You can open the arrow to compare them.'],'done');
+}
+$('replyYes').onclick=()=>respondFeedback(true);$('replyNo').onclick=()=>respondFeedback(false);
+$('teachForm').onsubmit=e=>{e.preventDefault();teachCharacter($('correctLetter').value)};
+$('read').onclick=start;$('stop').onclick=()=>{endRun();$('state').textContent='STOPPED'};$('sound').onclick=()=>{voiceOn=!voiceOn;$('sound').textContent=voiceOn?'Voice on':'Voice off';$('sound').setAttribute('aria-pressed',String(voiceOn));if(running){let keep=index;endRun();index=keep;running=true;$('read').disabled=true;$('stop').disabled=false;playLine(runId)}};
+$('upload').onclick=()=>{unlockHum();$('file').click()};
+addEventListener('pointerdown',unlockHum);addEventListener('keydown',unlockHum);
+async function fileInput(file){if(!file)return;resetEvidence();unlockHum();const id=++loadId;clearBackdrops();if(file.size>30*1024*1024){endRun();document.body.classList.add('has-image');document.body.classList.add('finished');$('upload').textContent='Show another';setCaption('Please choose an image under 30 MB.');return}endRun();document.body.classList.add('has-image');setCaption('');$('read').disabled=true;$('state').textContent='OPENING IMAGE';try{const img=await createImageBitmap(file);if(id!==loadId){img.close();return}let s=Math.min(1,700/img.width,700/img.height),c=make(Math.max(1,Math.round(img.width*s)),Math.max(1,Math.round(img.height*s)));white(c);c.getContext('2d').drawImage(img,0,0,c.width,c.height);img.close();choose(c,file.name||'Your image');if(current)start()}catch{if(id!==loadId)return;setCaption('I could not open that image. Try PNG or JPEG.');$('read').disabled=!current;$('state').textContent='IMAGE NOT OPENED';document.body.classList.add('finished');$('upload').textContent='Show another'}}
+$('file').onchange=e=>{fileInput(e.target.files[0]);e.target.value=''};let drag=0;addEventListener('dragenter',e=>{e.preventDefault();drag++;document.body.classList.add('drag')});addEventListener('dragover',e=>e.preventDefault());addEventListener('dragleave',()=>{if(--drag<=0){drag=0;document.body.classList.remove('drag')}});addEventListener('drop',e=>{e.preventDefault();drag=0;document.body.classList.remove('drag');fileInput(e.dataTransfer.files[0])});addEventListener('paste',e=>{let item=Array.from(e.clipboardData?.items||[]).find(i=>i.type.startsWith('image/'));if(item){e.preventDefault();fileInput(item.getAsFile())}});addEventListener('keydown',e=>{if(e.key==='Escape'&&$('evidence').open){e.preventDefault();closeEvidence();return}if(e.key==='Escape'){resetEvidence();loadId++;endRun();current=null;source=null;clearBackdrops();document.body.classList.remove('has-image');setCaption('');$('file').value=''}});addEventListener('pagehide',endRun);$('read').disabled=true;
+</script></body></html>
